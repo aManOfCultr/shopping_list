@@ -17,6 +17,7 @@ class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> _groceryItems = [];
 
   var _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -30,8 +31,21 @@ class _GroceryListState extends State<GroceryList> {
 
     final response = await http.get(url);
 
-    final Map<String, dynamic> listData =
-        json.decode(response.body);
+    if (response.statusCode >= 400) {
+      setState(() {
+        _error = 'Failed to fetch data! Please try again later.';
+      });
+      return;
+    }
+
+    if(response.body == 'null'){
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final Map<String, dynamic> listData = json.decode(response.body);
 
     final List<GroceryItem> loadedItemList = [];
 
@@ -59,20 +73,47 @@ class _GroceryListState extends State<GroceryList> {
         builder: (ctx) => const NewItem(),
       ),
     );
-    if(newItem == null){
+    if (newItem == null) {
       return;
-    }
-    else{
+    } else {
       setState(() {
         _groceryItems.add(newItem);
       });
     }
   }
 
-  void _removeItem(GroceryItem item) {
+  void _removeItem(GroceryItem item) async {
+    final index = _groceryItems.indexOf(item);
     setState(() {
       _groceryItems.remove(item);
     });
+
+    final url = Uri.https('shopping-list-e28ee-default-rtdb.firebaseio.com',
+        'shoppinglist/${item.id}.json');
+
+    final response = await http.delete(url);
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _groceryItems.insert(index, item);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: () {
+              _removeItem(item);
+            },
+          ),
+          content: const Text('Unable to Delete. Try later.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -91,8 +132,10 @@ class _GroceryListState extends State<GroceryList> {
       ),
     );
 
-    if(_isLoading){
-      mainContent = const Center(child: CircularProgressIndicator(),);
+    if (_isLoading) {
+      mainContent = const Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
     if (_groceryItems.isNotEmpty) {
@@ -114,6 +157,26 @@ class _GroceryListState extends State<GroceryList> {
           onDismissed: (direction) {
             _removeItem(_groceryItems[index]);
           },
+        ),
+      );
+    }
+
+    if (_error != null) {
+      mainContent = Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 70,
+            ),
+            Text(
+                style: const TextStyle(
+                  fontSize: 20,
+                ),
+                textAlign: TextAlign.center,
+                _error!),
+          ],
         ),
       );
     }
