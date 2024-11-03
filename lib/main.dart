@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:shopping_list/util.dart';
 
 import 'package:shopping_list/widgets/grocery_list.dart';
 
@@ -15,6 +16,9 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    TextTheme textTheme =
+        createTextTheme(context, "Ubuntu", "Ubuntu Condensed");
+
     return DynamicColorBuilder(
         builder: (ColorScheme? lightDynamic, ColorScheme? dark) {
       ColorScheme lightColorScheme;
@@ -32,20 +36,17 @@ class MyApp extends StatelessWidget {
       return MaterialApp(
         title: 'Shopping List',
         theme: ThemeData(
+          useMaterial3: true,
+          brightness: lightColorScheme.brightness,
           colorScheme: lightColorScheme,
-          scaffoldBackgroundColor: lightColorScheme.secondaryContainer,
-          textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-            backgroundColor: lightColorScheme.secondaryContainer,
-            foregroundColor: lightColorScheme.onSecondaryContainer,
-          )),
-          appBarTheme: AppBarTheme(color: lightColorScheme.secondaryContainer),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-            backgroundColor: lightColorScheme.inversePrimary,
-            foregroundColor: lightColorScheme.primary,
-          )),
-          iconTheme: IconThemeData(color: lightColorScheme.onSurface),
+          scaffoldBackgroundColor: lightColorScheme.surface,
+          canvasColor: lightColorScheme.surface,
+          elevatedButtonTheme:
+              ElevatedButtonThemeData(style: ElevatedButton.styleFrom(foregroundColor: lightColorScheme.outline, ),),
+          textTheme: textTheme.apply(
+            bodyColor: lightColorScheme.onSurface,
+            displayColor: lightColorScheme.onSurface,
+          ),
         ),
 
         darkTheme: ThemeData(
